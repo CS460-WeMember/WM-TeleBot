@@ -70,16 +70,15 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_message.chat_id, text="title here")
+    await context.bot.send_message(chat_id="150503562", text="testing testing")
+    # if want to send to the user who set the reminder
+    # await context.bot.send_message(chat_id=context.job.context, text="testing testing")
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    job_queue = ApplicationBuilder.job_queue(self=application, job_queue=None)
-
-    # job_queue.run_once(send_reminder, pbapi.adhoc_list.when)
+    job_queue = application.job_queue
     job_queue.run_once(send_reminder, 5)
-    # run_once(send_reminder, 5)
 
     # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
     conv_handler = ConversationHandler(
@@ -103,8 +102,8 @@ if __name__ == '__main__':
     # can use this to schedule message into a queue
     # run_once(callback, i.when, data=None, name=None, chat_id=None, user_id=None, job_kwargs=None)
     #  https://docs.python-telegram-bot.org/en/stable/examples.timerbot.html example here
-    for i in pbapi.adhoc_list:
-        print(i)
+    # for i in pbapi.adhoc_list:
+    #     print(i)
 
     application.add_handler(conv_handler)
     application.run_polling()
