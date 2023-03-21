@@ -24,14 +24,11 @@ USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHENDATE, REMINDERWEEKDAY, REMINDER
 
 pbapi = PocketbaseApi()
 
-sessions = {}
-
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(text="Hi there, are you the User or Caretaker?",
                                     reply_markup=prompts.choice_user_caretaker)
-    context.user_data['userType'] = update.message.text
-    print(context.user_data['userType'])
+    context.user_data['user_type'] = update.message.text
 
     return USERTYPE
 
@@ -61,7 +58,7 @@ async def prompt_action_init(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def prompt_reminder_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    # Handle title
+    context.user_data['title'] = update.message
     await update.message.reply_text(
         text="What type of notification?",
         reply_markup=prompts.choice_reminder_freq
@@ -71,6 +68,10 @@ async def prompt_reminder_title(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def prompt_reminder_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.message.text == 'Once':
+        context.user_data["reminder_type"] = 'adhoc'
+    elif update.message.text == 'Daily' or update.message.text == 'Weekly':
+        context.user_data["reminder_type"] = 'regular'
     # Handle type
     if update.message.text == 'Once':
         # Date entry
@@ -85,7 +86,6 @@ async def prompt_reminder_type(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text(
             text="What time? HHMM",
         )
-        print("DAILY")
 
         return REMINDERWHENTIME
 
@@ -100,62 +100,111 @@ async def prompt_reminder_type(update: Update, context: ContextTypes.DEFAULT_TYP
 
 async def prompt_reminder_day(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Handle date
-    print("WEEKDAY", update.message.text)
+    context.user_data['weekday'] = update.message.text
     await update.message.reply_text(
-        text="When would you like this reminder to be? DDDD"
+        text="When would you like this reminder to be? HHMM"
     )
 
     return REMINDERWHENTIME
 
 
 async def prompt_reminder_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    print("ONCE", update.message.text)
+    # Do some verification
+    context.user_data['date'] = update.message.text
     await update.message.reply_text(
-        text="When would you like this reminder to be? DDDD"
+        text="When would you like this reminder to be? HHMM"
     )
 
     return REMINDERWHENTIME
 
 
 async def prompt_reminder_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    print("TIME", update.message.text)
+    context.user_data['time'] = update.message.text
     await update.message.reply_text(
-        text="Upload an image for this reminder!"
+        text="Upload an image for this reminder!",
     )
 
     return REMINDERPHOTO
 
 
 async def prompt_reminder_pic(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    print(update.message.photo)
+    context.user_data['picture'] = await update.message.photo[-1].get_file()
+    await update.message.reply_text(
+        text="Upload some audio for this reminder!"
+    )
 
     return REMINDERAUDIO
 
 
 async def prompt_reminder_audio(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    print(update.message.audio)
+    if update.message.audio:
+        context.user_data['audio'] = await update.message.audio.get_file()
+    elif update.message.voice:
+        context.user_data['audio'] = await update.message.voice.get_file()
+
+    await update.message.reply_text(
+        text="How loud do you want the audio?",
+        reply_markup=prompts.choice_audio_volume
+    )
 
     return REMINDERVOLUME
 
 
 async def prompt_audio_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    print(update.message.text)
+    context.user_data['volume'] = update.message.text
+
+    await update.message.reply_text(
+        text='What color would you like the lights?',
+        reply_markup=prompts.choice_color
+    )
+
     return REMINDERCOLOR
 
 
 async def prompt_light_color(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    color_map = {'Red': 'FF0000', 'Orange': 'FF8300', 'Yellow': 'FFF000', 'Green': '00FF00', 'Blue': '0046FF',
+                 'Purple': 'AA00FF', 'Pink': 'FF00E0', 'White': 'FFFFFF'}
+    context.user_data['color'] = color_map[update.message.text]
+
+    await update.message.reply_text(
+        text="How bright would you like the lights?",
+        reply_markup=prompts.choice_brightness
+    )
+
     return REMINDERBRIGHTNESS
 
 
 async def prompt_brightness(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data['brightness'] = update.message.text
+
+    await update.message.reply_text(
+        text="What device do you want to link?",
+        reply_markup=prompts.choice_device
+    )
+
     return REMINDERDEVICE
 
 
 async def prompt_device(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data['device'] = update.message.text
+
+    await update.message.reply_text(
+        text="Would you require the confirmation camera??",
+        reply_markup=prompts.choice_cfm_cam
+    )
+
     return REMINDERCFMPHOTO
 
 
 async def prompt_cfm_cam(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data['confirmation_cam'] = update.message.text
+
+    await update.message.reply_text(
+        text="Thank you, creating reminder"
+    )
+
+    print(context.user_data.values())
+
     return ConversationHandler.END
 
 
@@ -183,14 +232,20 @@ if __name__ == '__main__':
             REMINDERTYPE: [MessageHandler(filters.Regex("^(Once|Daily|Weekly)$"), prompt_reminder_type)],
             REMINDERWHENDATE: [MessageHandler(filters.Regex("^[0-9]{6}$"), prompt_reminder_date)],
             REMINDERWEEKDAY: [MessageHandler(filters.Regex("^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$"), prompt_reminder_day)],
-            REMINDERWHENTIME: [MessageHandler(filters.Regex("^[0-9]{4}$"), prompt_reminder_time)],
-            REMINDERPHOTO: [MessageHandler(filters.PHOTO), prompt_reminder_pic],
-            REMINDERAUDIO: [MessageHandler(filters.AUDIO, prompt_reminder_audio)],
+            REMINDERWHENTIME: [
+                MessageHandler(filters.Regex("^(2[0-3]|[01]?[0-9])([0-5]?[0-9])$"), prompt_reminder_time)],
+
+            REMINDERPHOTO: [MessageHandler(filters.PHOTO, prompt_reminder_pic)],
+            REMINDERAUDIO: [MessageHandler(filters.VOICE | filters.AUDIO, prompt_reminder_audio)],
+
             REMINDERVOLUME: [MessageHandler(filters.Regex("^(Off|Quiet|Moderate|Loud)$"), prompt_audio_volume)],
             REMINDERCOLOR: [MessageHandler(filters.Regex("^(Red|Orange|Yellow|Green|Blue|Purple|Pink|White)$"),
                                            prompt_light_color)],
             REMINDERBRIGHTNESS: [MessageHandler(filters.Regex("^(Low|Med|High)$"), prompt_brightness)],
-            REMINDERCFMPHOTO: [MessageHandler(filters.Regex("^(Yes|Nope)"), prompt_cfm_cam)]
+
+            REMINDERDEVICE: [MessageHandler(filters.Regex("^(Button 1|Button 2|Toothbrush Holder)$"), prompt_device)],
+
+            REMINDERCFMPHOTO: [MessageHandler(filters.Regex("^(Yes|No)"), prompt_cfm_cam)]
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
