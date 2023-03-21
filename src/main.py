@@ -9,7 +9,7 @@ from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, \
     CallbackQueryHandler
 
-from src.utils import tryDate
+from src.utils import tryDate, tryTime
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
@@ -129,7 +129,7 @@ async def prompt_reminder_date(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def prompt_reminder_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data['time'] = update.message.text
+    context.user_data['time'] = tryTime(int(update.message.text))
     await update.message.reply_text(
         text="Upload an image for this reminder!",
     )
