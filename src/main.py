@@ -7,7 +7,7 @@ from pocketbaseapi import PocketbaseApi
 
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardRemove
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, JobQueue
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, Application
 from datetime import datetime
 
 load_dotenv()
@@ -25,9 +25,6 @@ pbapi = PocketbaseApi()
 
 sessions = {}
 
-# initialise the queue and dispatcher
-job_queue = JobQueue()
-job_queue.set_dispatcher()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(text="Hi there, are you the User or Caretaker?",
@@ -70,11 +67,19 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 # Use this to send the message to the user
-async def send_message(context):
-    context.bot.send_message(chat_id=CHAT_ID, text="Scheduled message")
+
+
+async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(chat_id=update.effective_message.chat_id, text="title here")
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    job_queue = ApplicationBuilder.job_queue(self=application, job_queue=None)
+
+    # job_queue.run_once(send_reminder, pbapi.adhoc_list.when)
+    job_queue.run_once(send_reminder, 5)
+    # run_once(send_reminder, 5)
 
     # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
     conv_handler = ConversationHandler(
@@ -101,12 +106,5 @@ if __name__ == '__main__':
     for i in pbapi.adhoc_list:
         print(i)
 
-
     application.add_handler(conv_handler)
     application.run_polling()
-
-# okay this one i don't know where to put
-scheduled_time = datetime.strptime("2023-03-21 18:31:48.335000", "%Y-%m-%d %H:%M:%S.%f")
-job_queue.run_once(send_message, scheduled_time)
-
-job_queue.start()
