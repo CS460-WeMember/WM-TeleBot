@@ -16,10 +16,11 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHENDATE, REMINDERWEEKDAY, REMINDERWHENTIME,\
+USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHENDATE, REMINDERWEEKDAY, REMINDERWHENTIME, \
     REMINDERTYPE, REMINDERPHOTO, \
-    REMINDERAUDIO, REMINDERSOUND, REMINDERPIC, \
-    REMINDERBRIGHTNESS, REMINDERDEVICE, REMINDERCFMPHOTO, REMINDERCHECK, SETTINGS = range(16)
+    REMINDERAUDIO, REMINDERVOLUME, \
+    REMINDERCOLOR, REMINDERBRIGHTNESS, \
+    REMINDERDEVICE, REMINDERCFMPHOTO, REMINDERCHECK, SETTINGS = range(16)
 
 pbapi = PocketbaseApi()
 
@@ -122,7 +123,40 @@ async def prompt_reminder_time(update: Update, context: ContextTypes.DEFAULT_TYP
         text="Upload an image for this reminder!"
     )
 
-    return REMINDERPIC
+    return REMINDERPHOTO
+
+
+async def prompt_reminder_pic(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    print(update.message.photo)
+
+    return REMINDERAUDIO
+
+
+async def prompt_reminder_audio(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    print(update.message.audio)
+
+    return REMINDERVOLUME
+
+
+async def prompt_audio_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    print(update.message.text)
+    return REMINDERCOLOR
+
+
+async def prompt_light_color(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    return REMINDERBRIGHTNESS
+
+
+async def prompt_brightness(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    return REMINDERDEVICE
+
+
+async def prompt_device(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    return REMINDERCFMPHOTO
+
+
+async def prompt_cfm_cam(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    return ConversationHandler.END
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -150,12 +184,13 @@ if __name__ == '__main__':
             REMINDERWHENDATE: [MessageHandler(filters.Regex("^[0-9]{6}$"), prompt_reminder_date)],
             REMINDERWEEKDAY: [MessageHandler(filters.Regex("^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$"), prompt_reminder_day)],
             REMINDERWHENTIME: [MessageHandler(filters.Regex("^[0-9]{4}$"), prompt_reminder_time)],
-            # PHOTO: [MessageHandler(filters.PHOTO, photo), CommandHandler("skip", skip_photo)],
-            # LOCATION: [
-            #     MessageHandler(filters.LOCATION, location),
-            #     CommandHandler("skip", skip_location),
-            # ],
-            # BIO: [MessageHandler(filters.TEXT & ~filters.COMMAND, bio)],
+            REMINDERPHOTO: [MessageHandler(filters.PHOTO), prompt_reminder_pic],
+            REMINDERAUDIO: [MessageHandler(filters.AUDIO, prompt_reminder_audio)],
+            REMINDERVOLUME: [MessageHandler(filters.Regex("^(Off|Quiet|Moderate|Loud)$"), prompt_audio_volume)],
+            REMINDERCOLOR: [MessageHandler(filters.Regex("^(Red|Orange|Yellow|Green|Blue|Purple|Pink|White)$"),
+                                           prompt_light_color)],
+            REMINDERBRIGHTNESS: [MessageHandler(filters.Regex("^(Low|Med|High)$"), prompt_brightness)],
+            REMINDERCFMPHOTO: [MessageHandler(filters.Regex("^(Yes|Nope)"), prompt_cfm_cam)]
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
