@@ -2,6 +2,7 @@ import logging
 import os
 import prompts
 import responses
+from pocketbaseapi import PocketbaseApi
 
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardRemove
@@ -16,6 +17,8 @@ logging.basicConfig(
 
 USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHEN, REMINDERFREQ, REMINDERPHOTO, REMINDERAUDIO, REMINDERSOUND, \
     REMINDERBRIGHTNESS, REMINDERDEVICE, REMINDERCFMPHOTO, REMINDERCHECK, SETTINGS = range(13)
+
+pbapi = PocketbaseApi()
 
 sessions = {}
 
