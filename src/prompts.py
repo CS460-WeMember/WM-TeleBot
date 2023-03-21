@@ -8,7 +8,7 @@ choice_user_caretaker = telegram.ReplyKeyboardMarkup(
     resize_keyboard=True)
 
 choice_set_reminder = telegram.ReplyKeyboardMarkup(
-    [['Set Reminder'], ['Check Reminders']],
+    [['Set Reminder'], ['Check Reminders'], ['Settings']],
     one_time_keyboard=True,
     resize_keyboard=True
 )
