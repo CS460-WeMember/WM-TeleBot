@@ -10,10 +10,6 @@ class PocketbaseApi:
     load_dotenv()
     client = PocketBase(os.getenv("POCKETBASEIP"))
 
-    regular_list = []
-    adhoc_list = []
-    config_list = {}
-
     def _respond_reg(self):
         self.regular_list.clear()
         self._refresh_regular()
@@ -40,12 +36,13 @@ class PocketbaseApi:
     def _refresh_adhoc(self):
         result = self.client.collection("adhoc").get_full_list(200, {'sort': '-created'})
         for res in result:
-            if res.__getattribute__('activated') is None:
+            if res.__getattribute__('activated') == '':
                 self.adhoc_list.append(Adhoc(res.__getattribute__('id'), res.__getattribute__('title'),
-                                        datetime.strptime(res.__getattribute__('when'), '%Y-%m-%d %H:%M:%S.%f'),
-                                        res.__getattribute__('picture'), res.__getattribute__('options'),
-                                        res.__getattribute__('audio'), res.__getattribute__('device'),
-                                        res.__getattribute__('started'), res.__getattribute__('activated')))
+                                             datetime.strptime(res.__getattribute__('when'), '%Y-%m-%d %H:%M:%S.%f'),
+                                             res.__getattribute__('picture'), res.__getattribute__('options'),
+                                             res.__getattribute__('audio'), res.__getattribute__('device'),
+                                             res.__getattribute__('started'), res.__getattribute__('activated')))
+
 
     def _refresh_config(self):
         result = self.client.collection("config").get_full_list(200)
@@ -53,6 +50,9 @@ class PocketbaseApi:
             self.config_list.update({res.__getattribute__('field'): res.__getattribute__('value')})
 
     def __init__(self):
+        self.regular_list = []
+        self.adhoc_list = []
+        self.config_list = {}
         self._refresh_adhoc()
         self._refresh_regular()
         self._refresh_config()
