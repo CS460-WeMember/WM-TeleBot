@@ -2,11 +2,13 @@ import logging
 import os
 import prompts
 import responses
+import datetime
 from pocketbaseapi import PocketbaseApi
 
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardRemove
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, JobQueue
+from datetime import datetime
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
@@ -16,12 +18,16 @@ logging.basicConfig(
 )
 
 USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHEN, REMINDERFREQ, REMINDERPHOTO, REMINDERAUDIO, REMINDERSOUND, \
-    REMINDERBRIGHTNESS, REMINDERDEVICE, REMINDERCFMPHOTO, REMINDERCHECK, SETTINGS = range(13)
+    REMINDERBRIGHTNESS, REMINDERDEVICE, REMINDERCFMPHOTO, REMINDERCHECK, SETTINGS = range(
+        13)
 
 pbapi = PocketbaseApi()
 
 sessions = {}
 
+# initialise the queue and dispatcher
+job_queue = JobQueue()
+job_queue.set_dispatcher()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(text="Hi there, are you the User or Caretaker?",
@@ -63,6 +69,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     return ConversationHandler.END
 
+# Use this to send the message to the user
+async def send_message(context):
+    context.bot.send_message(chat_id=CHAT_ID, text="Scheduled message")
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -85,5 +94,19 @@ if __name__ == '__main__':
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
+    # date is stored as datetime.datetime
+    # can use this to schedule message into a queue
+    # run_once(callback, i.when, data=None, name=None, chat_id=None, user_id=None, job_kwargs=None)
+    #  https://docs.python-telegram-bot.org/en/stable/examples.timerbot.html example here
+    for i in pbapi.adhoc_list:
+        print(i)
+
+
     application.add_handler(conv_handler)
     application.run_polling()
+
+# okay this one i don't know where to put
+scheduled_time = datetime.strptime("2023-03-21 18:31:48.335000", "%Y-%m-%d %H:%M:%S.%f")
+job_queue.run_once(send_message, scheduled_time)
+
+job_queue.start()
