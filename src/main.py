@@ -9,6 +9,8 @@ from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, \
     CallbackQueryHandler
 
+from src.utils import tryDate
+
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 logging.basicConfig(
@@ -110,7 +112,15 @@ async def prompt_reminder_day(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def prompt_reminder_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Do some verification
-    context.user_data['date'] = update.message.text
+    parsed = tryDate(int(update.message.text))
+    if parsed is None:
+        await update.message.reply_text(
+            text="Please enter a validate in format DDMMYY",
+        )
+        return REMINDERWHENDATE
+    else:
+        context.user_data['date'] = parsed
+
     await update.message.reply_text(
         text="When would you like this reminder to be? HHMM"
     )
