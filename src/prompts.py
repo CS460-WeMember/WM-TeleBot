@@ -1,6 +1,4 @@
 import telegram
-from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 
 choice_user_caretaker = telegram.ReplyKeyboardMarkup(
     [['User', 'Caretaker']],
@@ -15,6 +13,14 @@ choice_set_reminder = telegram.ReplyKeyboardMarkup(
 
 choice_reminder_freq = telegram.ReplyKeyboardMarkup(
     [['Once'], ['Daily'], ['Weekly']],
+    one_time_keyboard=True,
+    resize_keyboard=True
+)
+
+choice_reminder_day = telegram.ReplyKeyboardMarkup(
+    [['Mon', 'Tue', 'Wed'],
+     ['Thu', 'Fri', 'Sat'],
+     ['Sun']],
     one_time_keyboard=True,
     resize_keyboard=True
 )
