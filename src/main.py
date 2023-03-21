@@ -20,17 +20,33 @@ USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHEN, REMINDERFREQ, REMINDERPHOTO, 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(text="Hi there, are you the User or Caretaker?",
                                     reply_markup=prompts.choice_user_caretaker)
+    print(update.message)
     return USERTYPE
 
 
 async def prompt_user_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.message.from_user
-    print(user)
+
     await update.message.reply_text(
         text="Would you like to set a reminder?",
         reply_markup=prompts.choice_set_reminder
     )
-    print("REC" + update.message.from_user)
+    return ACTIONTYPE
+
+
+async def prompt_action_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text(
+        text="Set a reminder title"
+    )
+
+    return REMINDERTITLE
+
+
+async def prompt_reminder_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text(
+        text="When do you want this reminder to be?",
+        reply_markup=prompts.choice_reminder_freq
+    )
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -51,6 +67,8 @@ if __name__ == '__main__':
         entry_points=[CommandHandler("start", start)],
         states={
             USERTYPE: [MessageHandler(filters.Regex("^(User|Caretaker)$"), prompt_user_type)],
+            ACTIONTYPE: [MessageHandler(filters.Regex("^(Set Reminder|Check Reminders)$"), prompt_action_type)],
+            REMINDERTITLE: [MessageHandler(filters.ALL, prompt_reminder_title)]
             # PHOTO: [MessageHandler(filters.PHOTO, photo), CommandHandler("skip", skip_photo)],
             # LOCATION: [
             #     MessageHandler(filters.LOCATION, location),

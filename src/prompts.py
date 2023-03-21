@@ -12,3 +12,9 @@ choice_set_reminder = telegram.ReplyKeyboardMarkup(
     one_time_keyboard=True,
     resize_keyboard=True
 )
+
+choice_reminder_freq = telegram.ReplyKeyboardMarkup(
+    [['Once'], ['Daily'], ['Weekly']],
+    one_time_keyboard=True,
+    resize_keyboard=True
+)
