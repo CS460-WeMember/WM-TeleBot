@@ -17,6 +17,8 @@ logging.basicConfig(
 USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHEN, REMINDERFREQ, REMINDERPHOTO, REMINDERAUDIO, REMINDERSOUND, \
     REMINDERBRIGHTNESS, REMINDERDEVICE, REMINDERCFMPHOTO, REMINDERCHECK, SETTINGS = range(13)
 
+sessions = {}
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(text="Hi there, are you the User or Caretaker?",
@@ -25,6 +27,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def prompt_user_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data['userType'] = update.message.text
     await update.message.reply_text(
         text="What would you like to do??",
         reply_markup=prompts.choice_set_reminder
