@@ -40,7 +40,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def prompt_action_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    print(update.message.from_user)
     if update.message.text == 'User':
         user_chat_id_list.append(update.message.from_user.id)
     else:
@@ -284,6 +283,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+    print("Hello", user_chat_id_list)
     for user_id in user_chat_id_list:
         await context.bot.send_message(chat_id=user_id, text="testing testing")
 
@@ -292,7 +292,7 @@ if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     job_queue = application.job_queue
-    job_queue.run_once(send_reminder, 5)
+    job_queue.run_repeating(send_reminder, 1)
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
