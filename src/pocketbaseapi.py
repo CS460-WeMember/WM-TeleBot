@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+import requests
 from dotenv import load_dotenv
 from pocketbase import PocketBase
 
@@ -72,4 +73,3 @@ class PocketbaseApi:
         self.client.realtime.subscribe('regular', self._respond_reg)
         self.client.realtime.subscribe('adhoc', self._respond_adhoc)
         self.client.realtime.subscribe('config', self._respond_config)
-

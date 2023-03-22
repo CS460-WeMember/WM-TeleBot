@@ -42,9 +42,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def prompt_user_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message.text == 'User':
-        user_chat_id_list.append(update.message.from_user.id)
+        if update.message.from_user.id not in user_chat_id_list:
+            user_chat_id_list.append(update.message.from_user.id)
     else:
-        ct_chat_id_list.append(update.message.from_user.id)
+        if update.message.from_user.id not in ct_chat_id_list:
+            ct_chat_id_list.append(update.message.from_user.id)
 
     await update.message.reply_text(
         text="What would you like to do?",
@@ -310,10 +312,10 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
-    now = datetime.utcnow()
+    now = datetime.now()
     for reg in pbapi.regular_list:
         if (reg.day == -1 or reg.day == now.weekday()) and reg.hour == now.hour and reg.minute == now.minute \
-                and now.second <= 1:
+                and now.second < 3:
             for user_id in user_chat_id_list:
                 await context.bot.send_message(chat_id=user_id, text="Hello, it's time to: " + reg.title)
 

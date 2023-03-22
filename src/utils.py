@@ -18,11 +18,11 @@ def checkReminders(reg_list, adh_list) -> str:
     day_map = {-1: 'Daily', 0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday'
         , 6: 'Sunday'}
     for reg in reg_list:
-        ret += reg.title + " @ " + day_map[reg.day] + " " + str(reg.hour) + "h" + str(reg.minute) + "m\n"
+        ret += reg.title + "\n@ " + day_map[reg.day] + " " + str(reg.hour) + ":" + str(reg.minute) + ("✅" if reg.last_activated and reg.last_activated > datetime.combine(datetime.now().date(), datetime.min.time()) else "")
 
     ret += '\nAdhoc: \n'
 
     for adh in adh_list:
-        ret += adh.title + " @ " + str(adh.when.replace(second=0, microsecond=0)) + "\n"
+        ret += adh.title + "\n@ " + str(adh.when.strftime('%Y-%m-%d %H:%M')) + "\n"
 
     return ret
