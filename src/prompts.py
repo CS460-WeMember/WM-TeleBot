@@ -5,7 +5,7 @@ choice_user_caretaker = telegram.ReplyKeyboardMarkup(
     one_time_keyboard=True,
     resize_keyboard=True)
 
-choice_set_reminder = telegram.ReplyKeyboardMarkup(
+choice_action_type = telegram.ReplyKeyboardMarkup(
     [['Set Reminder'], ['Check Reminders'], ['Settings']],
     one_time_keyboard=True,
     resize_keyboard=True
@@ -51,6 +51,15 @@ choice_brightness = telegram.ReplyKeyboardMarkup(
 
 choice_cfm_cam = telegram.ReplyKeyboardMarkup(
     [['Yes', 'No']],
+    one_time_keyboard=True,
+    resize_keyboard=True
+)
+
+choice_tbtime = telegram.ReplyKeyboardMarkup(
+    [['Toothbrush 2 Mins'],
+     ['Toothbrush 3 Mins'],
+     ['Toothbrush 4 Mins'],
+     ['Toothbrush 5 Mins']],
     one_time_keyboard=True,
     resize_keyboard=True
 )

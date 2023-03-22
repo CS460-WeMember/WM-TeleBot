@@ -2,7 +2,6 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-import pytz
 import requests
 from dotenv import load_dotenv
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -12,7 +11,7 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Conve
 import prompts
 import responses
 from pocketbaseapi import PocketbaseApi
-from src.utils import tryDate, tryTime
+from utils import tryDate, tryTime
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
@@ -25,7 +24,8 @@ USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHENDATE, REMINDERWEEKDAY, REMINDER
     REMINDERTYPE, REMINDERPHOTO, \
     REMINDERAUDIO, REMINDERVOLUME, \
     REMINDERCOLOR, REMINDERBRIGHTNESS, \
-    REMINDERDEVICE, REMINDERCFMPHOTO, REMINDERCHECK, SETTINGS = range(16)
+    REMINDERDEVICE, REMINDERCFMPHOTO, REMINDERCHECK, \
+    SETTINGS, TBTIMER = range(17)
 
 pbapi = PocketbaseApi()
 
@@ -40,7 +40,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return USERTYPE
 
 
-async def prompt_action_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def prompt_user_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message.text == 'User':
         user_chat_id_list.append(update.message.from_user.id)
     else:
@@ -48,13 +48,13 @@ async def prompt_action_type(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     await update.message.reply_text(
         text="What would you like to do??",
-        reply_markup=prompts.choice_set_reminder
+        reply_markup=prompts.choice_action_type
     )
 
     return ACTIONTYPE
 
 
-async def prompt_action_init(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def prompt_action_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # React to action type
     if update.message.text == 'Set Reminder':
         await update.message.reply_text(
@@ -64,7 +64,12 @@ async def prompt_action_init(update: Update, context: ContextTypes.DEFAULT_TYPE)
     elif update.message.text == 'Check Reminders':
         return REMINDERCHECK
     elif update.message.text == 'Settings':
-        return SETTINGS
+        await update.message.reply_text(
+            text="Adjust settings like the toothbrush timer!",
+            reply_markup=prompts.choice_tbtime
+        )
+
+        return TBTIMER
 
     return responses.parse_action_choice(update.message.text)
 
@@ -273,6 +278,18 @@ async def prompt_cfm_cam(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     return ConversationHandler.END
 
 
+async def prompt_tb_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    do = [int(s) for s in update.message.text.split() if s.isdigit()][0]
+    print(do)
+    pbapi.update_minutes(do)
+    await update.message.reply_text(
+        text="Ok, got it!, What would you like to do now?",
+        reply_markup=prompts.choice_action_type
+    )
+
+    return ACTIONTYPE
+
+
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Cancels and ends the conversation."""
     user = update.message.from_user
@@ -296,6 +313,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
             for user_id in user_chat_id_list:
                 await context.bot.send_message(chat_id=user_id, text="Hello, it's time to: " + adh.title)
 
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -305,8 +323,9 @@ if __name__ == '__main__':
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            USERTYPE: [MessageHandler(filters.Regex("^(User|Caretaker)$"), prompt_action_type)],
-            ACTIONTYPE: [MessageHandler(filters.Regex("^(Set Reminder|Check Reminders)$"), prompt_action_init)],
+            USERTYPE: [MessageHandler(filters.Regex("^(User|Caretaker)$"), prompt_user_type)],
+            ACTIONTYPE: [
+                MessageHandler(filters.Regex("^(Set Reminder|Check Reminders|Settings)$"), prompt_action_type)],
 
             REMINDERTITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, prompt_reminder_title)],
             REMINDERTYPE: [MessageHandler(filters.Regex("^(Once|Daily|Weekly)$"), prompt_reminder_type)],
@@ -325,7 +344,9 @@ if __name__ == '__main__':
 
             REMINDERDEVICE: [MessageHandler(filters.Regex("^(Button 1|Button 2|Toothbrush Holder)$"), prompt_device)],
 
-            REMINDERCFMPHOTO: [MessageHandler(filters.Regex("^(Yes|No)"), prompt_cfm_cam)]
+            REMINDERCFMPHOTO: [MessageHandler(filters.Regex("^(Yes|No)"), prompt_cfm_cam)],
+
+            TBTIMER: [MessageHandler(filters.Regex("^(Toothbrush [0-9] Mins)$"), prompt_tb_time)]
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )

@@ -44,10 +44,22 @@ class PocketbaseApi:
                                              res.__getattribute__('audio'), res.__getattribute__('device'),
                                              res.__getattribute__('started'), res.__getattribute__('activated')))
 
+    def _respond_config(self, inp):
+        self._refresh_config()
+
     def _refresh_config(self):
         result = self.client.collection("config").get_full_list(200)
         for res in result:
             self.config_list.update({res.__getattribute__('field'): res.__getattribute__('value')})
+
+    def update_minutes(self, mins: int):
+        result = self.client.collection("config").get_full_list(200)
+        dat = {
+            'value': mins
+        }
+        for res in result:
+            if res.__getattribute__('field') == 'toothbrushminutes':
+                self.client.collection("config").update(res.__getattribute__('id'), dat)
 
     def __init__(self):
         self.regular_list = []
@@ -59,5 +71,5 @@ class PocketbaseApi:
 
         self.client.realtime.subscribe('regular', self._respond_reg)
         self.client.realtime.subscribe('adhoc', self._respond_adhoc)
-        self.client.realtime.subscribe('config', self._refresh_config)
+        self.client.realtime.subscribe('config', self._respond_config)
 
