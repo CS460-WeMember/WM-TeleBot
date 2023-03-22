@@ -74,8 +74,14 @@ async def prompt_reminder_title(update: Update, context: ContextTypes.DEFAULT_TY
 async def prompt_reminder_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message.text == 'Once':
         context.user_data["reminder_type"] = 'adhoc'
-    elif update.message.text == 'Daily' or update.message.text == 'Weekly':
+
+    elif update.message.text == 'Daily':
         context.user_data["reminder_type"] = 'regular'
+        context.user_data['day'] = -1
+
+    elif update.message.text == 'Weekly':
+        context.user_data["reminder_type"] = 'regular'
+
     # Handle type
     if update.message.text == 'Once':
         # Date entry
@@ -103,8 +109,8 @@ async def prompt_reminder_type(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def prompt_reminder_day(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    # Handle date
-    context.user_data['weekday'] = update.message.text
+    day_map = {"Mon": 0, "Tue": 1, "Wed": 2, "Thu": 3, "Fri": 4, "Sat": 5, "Sun": 6}
+    context.user_data['day'] = day_map[update.message.text]
     await update.message.reply_text(
         text="When would you like this reminder to be? HHMM"
     )
@@ -131,7 +137,11 @@ async def prompt_reminder_date(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def prompt_reminder_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data['time'] = tryTime(int(update.message.text))
+    res = tryTime(int(update.message.text))
+    context.user_data['time'] = res
+    context.user_data['hour'] = res.hour
+    context.user_data['minute'] = res.minute
+
     await update.message.reply_text(
         text="Upload an image for this reminder!",
     )
@@ -200,7 +210,7 @@ async def prompt_brightness(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 async def prompt_device(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    device_map = {"Button 0": 0, "Button 1": 1, "Toothbrush Holder": 'toothbrush'}
+    device_map = {"Button 1": 0, "Button 2": 1, "Toothbrush Holder": 'toothbrush'}
     context.user_data['device'] = device_map[update.message.text]
 
     await update.message.reply_text(
@@ -217,8 +227,6 @@ async def prompt_cfm_cam(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_text(
         text="Thank you, creating reminder"
     )
-
-    print(context.user_data.values())
 
     if context.user_data['reminder_type'] == 'adhoc':
         data = MultipartEncoder(
@@ -237,7 +245,22 @@ async def prompt_cfm_cam(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                                  headers={'Content-Type': data.content_type})
         print(response.json())
     else:
-        pass
+        data = MultipartEncoder(
+            fields={
+                'day': str(context.user_data['day']),
+                'hour': str(context.user_data['hour']),
+                'minute': str(context.user_data['minute']),
+                'title': str(context.user_data['title']),
+                'audio': ('sound.oga', requests.get(context.user_data['audio'].file_path).content),
+                'picture': ('pic.jpg', requests.get(context.user_data['picture'].file_path).content),
+                'options': '{"light": "' + str(context.user_data['color']) + '","brightness": "'
+                           + str(context.user_data['brightness']) + '","sound": "' + str(context.user_data['volume'])
+                           + '","confirmation": "' + str(context.user_data['confirmation_cam']) + '"}',
+            }
+        )
+        response = requests.post(os.getenv("POCKETBASEIP") + 'api/collections/regular/records', data=data,
+                                 headers={'Content-Type': data.content_type})
+        print(response.json())
 
     return ConversationHandler.END
 
