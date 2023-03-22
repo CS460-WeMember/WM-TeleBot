@@ -28,6 +28,8 @@ USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHENDATE, REMINDERWEEKDAY, REMINDER
 
 pbapi = PocketbaseApi()
 
+user_chat_id_list, ct_chat_id_list = [], []
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(text="Hi there, are you the User or Caretaker?",
@@ -38,6 +40,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def prompt_action_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    print(update.message.from_user)
+    if update.message.text == 'User':
+        user_chat_id_list.append(update.message.from_user.id)
+    else:
+        ct_chat_id_list.append(update.message.from_user.id)
+
     await update.message.reply_text(
         text="What would you like to do??",
         reply_markup=prompts.choice_set_reminder
@@ -275,8 +283,16 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
+async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+    for user_id in user_chat_id_list:
+        await context.bot.send_message(chat_id=user_id, text="testing testing")
+
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    job_queue = application.job_queue
+    job_queue.run_once(send_reminder, 5)
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
