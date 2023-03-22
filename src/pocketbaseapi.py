@@ -1,3 +1,4 @@
+import requests
 from pocketbase import PocketBase
 
 import os
@@ -10,7 +11,7 @@ class PocketbaseApi:
     load_dotenv()
     client = PocketBase(os.getenv("POCKETBASEIP"))
 
-    def _respond_reg(self):
+    def _respond_reg(self, inp):
         self.regular_list.clear()
         self._refresh_regular()
 
@@ -29,7 +30,7 @@ class PocketbaseApi:
                                           '%Y-%m-%d %H:%M:%S.%f')
                         if res.__getattribute__('last_started') != '' else None))
 
-    def _respond_adhoc(self):
+    def _respond_adhoc(self, inp):
         self.adhoc_list.clear()
         self._refresh_adhoc()
 
@@ -42,7 +43,6 @@ class PocketbaseApi:
                                              res.__getattribute__('picture'), res.__getattribute__('options'),
                                              res.__getattribute__('audio'), res.__getattribute__('device'),
                                              res.__getattribute__('started'), res.__getattribute__('activated')))
-
 
     def _refresh_config(self):
         result = self.client.collection("config").get_full_list(200)
@@ -60,3 +60,4 @@ class PocketbaseApi:
         self.client.realtime.subscribe('regular', self._respond_reg)
         self.client.realtime.subscribe('adhoc', self._respond_adhoc)
         self.client.realtime.subscribe('config', self._refresh_config)
+

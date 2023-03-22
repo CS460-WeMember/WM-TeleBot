@@ -1,14 +1,16 @@
 import logging
 import os
+from datetime import datetime
+
+import requests
+from dotenv import load_dotenv
+from requests_toolbelt.multipart.encoder import MultipartEncoder
+from telegram import Update, ReplyKeyboardRemove
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
+
 import prompts
 import responses
 from pocketbaseapi import PocketbaseApi
-
-from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardRemove
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, \
-    CallbackQueryHandler
-
 from src.utils import tryDate, tryTime
 
 load_dotenv()
@@ -60,7 +62,7 @@ async def prompt_action_init(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def prompt_reminder_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data['title'] = update.message
+    context.user_data['title'] = update.message.text
     await update.message.reply_text(
         text="What type of notification?",
         reply_markup=prompts.choice_reminder_freq
@@ -161,7 +163,8 @@ async def prompt_reminder_audio(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def prompt_audio_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data['volume'] = update.message.text
+    vol_map = {'Off': 0, 'Quiet': 33, 'Moderate': 67, 'Loud': 100}
+    context.user_data['volume'] = vol_map[update.message.text]
 
     await update.message.reply_text(
         text='What color would you like the lights?',
@@ -185,7 +188,8 @@ async def prompt_light_color(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def prompt_brightness(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data['brightness'] = update.message.text
+    bright_map = {'Low': 33, 'Med': 67, "High": 100}
+    context.user_data['brightness'] = bright_map[update.message.text]
 
     await update.message.reply_text(
         text="What device do you want to link?",
@@ -196,7 +200,8 @@ async def prompt_brightness(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 async def prompt_device(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data['device'] = update.message.text
+    device_map = {"Button 0": 0, "Button 1": 1, "Toothbrush Holder": 'toothbrush'}
+    context.user_data['device'] = device_map[update.message.text]
 
     await update.message.reply_text(
         text="Would you require the confirmation camera??",
@@ -207,13 +212,32 @@ async def prompt_device(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 
 async def prompt_cfm_cam(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data['confirmation_cam'] = update.message.text
+    context.user_data['confirmation_cam'] = update.message.text.lower()
 
     await update.message.reply_text(
         text="Thank you, creating reminder"
     )
 
     print(context.user_data.values())
+
+    if context.user_data['reminder_type'] == 'adhoc':
+        data = MultipartEncoder(
+            fields={
+                'title': str(context.user_data['title']),
+                'when': str(datetime.combine(context.user_data['date'], context.user_data['time'])),
+                'options': '{"light": "' + str(context.user_data['color']) + '","brightness": "'
+                           + str(context.user_data['brightness']) + '","sound": "' + str(context.user_data['volume'])
+                           + '","confirmation": "' + str(context.user_data['confirmation_cam']) + '"}',
+                'audio': ('sound.oga', requests.get(context.user_data['audio'].file_path).content),
+                'picture': ('pic.jpg', requests.get(context.user_data['picture'].file_path).content),
+                'device': str(context.user_data['device'])
+            }
+        )
+        response = requests.post(os.getenv("POCKETBASEIP") + 'api/collections/adhoc/records', data=data,
+                                 headers={'Content-Type': data.content_type})
+        print(response.json())
+    else:
+        pass
 
     return ConversationHandler.END
 
