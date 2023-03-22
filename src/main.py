@@ -278,7 +278,6 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
