@@ -11,7 +11,7 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Conve
 import prompts
 import responses
 from pocketbaseapi import PocketbaseApi
-from utils import tryDate, tryTime
+from utils import tryDate, tryTime, checkReminders
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
@@ -24,8 +24,8 @@ USERTYPE, ACTIONTYPE, REMINDERTITLE, REMINDERWHENDATE, REMINDERWEEKDAY, REMINDER
     REMINDERTYPE, REMINDERPHOTO, \
     REMINDERAUDIO, REMINDERVOLUME, \
     REMINDERCOLOR, REMINDERBRIGHTNESS, \
-    REMINDERDEVICE, REMINDERCFMPHOTO, REMINDERCHECK, \
-    SETTINGS, TBTIMER = range(17)
+    REMINDERDEVICE, REMINDERCFMPHOTO, \
+    SETTINGS, TBTIMER = range(16)
 
 pbapi = PocketbaseApi()
 
@@ -47,7 +47,7 @@ async def prompt_user_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         ct_chat_id_list.append(update.message.from_user.id)
 
     await update.message.reply_text(
-        text="What would you like to do??",
+        text="What would you like to do?",
         reply_markup=prompts.choice_action_type
     )
 
@@ -62,7 +62,16 @@ async def prompt_action_type(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
         return REMINDERTITLE
     elif update.message.text == 'Check Reminders':
-        return REMINDERCHECK
+        await update.message.reply_text(
+            text=checkReminders(reg_list=pbapi.regular_list, adh_list=pbapi.adhoc_list)
+        )
+
+        await update.message.reply_text(
+            text="What would you like to do now?",
+            reply_markup=prompts.choice_action_type
+        )
+
+        return ACTIONTYPE
     elif update.message.text == 'Settings':
         await update.message.reply_text(
             text="Adjust settings like the toothbrush timer!",

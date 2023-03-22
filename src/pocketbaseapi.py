@@ -1,10 +1,10 @@
-import requests
+import os
+from datetime import datetime
+
+from dotenv import load_dotenv
 from pocketbase import PocketBase
 
-import os
-from dotenv import load_dotenv
 from models import Adhoc, Regular
-from datetime import datetime
 
 
 class PocketbaseApi:
