@@ -1,7 +1,8 @@
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
+import pytz
 import requests
 from dotenv import load_dotenv
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -283,16 +284,23 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
-    print("Hello", user_chat_id_list)
-    for user_id in user_chat_id_list:
-        await context.bot.send_message(chat_id=user_id, text="testing testing")
+    now = datetime.utcnow()
+    for reg in pbapi.regular_list:
+        if (reg.day == -1 or reg.day == now.weekday()) and reg.hour == now.hour and reg.minute == now.minute \
+                and now.second <= 1:
+            for user_id in user_chat_id_list:
+                await context.bot.send_message(chat_id=user_id, text="Hello, it's time to: " + reg.title)
 
+    for adh in pbapi.adhoc_list:
+        if adh.when <= now < adh.when + timedelta(seconds=3):
+            for user_id in user_chat_id_list:
+                await context.bot.send_message(chat_id=user_id, text="Hello, it's time to: " + adh.title)
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     job_queue = application.job_queue
-    job_queue.run_repeating(send_reminder, 1)
+    job_queue.run_repeating(send_reminder, 3)
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
