@@ -64,6 +64,8 @@ async def prompt_action_type(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
         return REMINDERTITLE
     elif update.message.text == 'Check Reminders':
+        pbapi.refresh_adhoc()
+        pbapi.refresh_regular()
         await update.message.reply_text(
             text=checkReminders(reg_list=pbapi.regular_list, adh_list=pbapi.adhoc_list)
         )
@@ -290,9 +292,7 @@ async def prompt_cfm_cam(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def prompt_tb_time(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    do = [int(s) for s in update.message.text.split() if s.isdigit()][0]
-    print(do)
-    pbapi.update_minutes(do)
+    pbapi.update_minutes([int(s) for s in update.message.text.split() if s.isdigit()][0])
     await update.message.reply_text(
         text="Ok, got it!, What would you like to do now?",
         reply_markup=prompts.choice_action_type

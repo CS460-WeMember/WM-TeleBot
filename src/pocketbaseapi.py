@@ -13,10 +13,10 @@ class PocketbaseApi:
     client = PocketBase(os.getenv("POCKETBASEIP"))
 
     def _respond_reg(self, inp):
-        self.regular_list.clear()
-        self._refresh_regular()
+        self.refresh_regular()
 
-    def _refresh_regular(self):
+    def refresh_regular(self):
+        self.regular_list.clear()
         result = self.client.collection("regular").get_full_list(200, {'sort': '-created'})
         for res in result:
             self.regular_list.append(
@@ -32,10 +32,10 @@ class PocketbaseApi:
                         if res.__getattribute__('last_started') != '' else None))
 
     def _respond_adhoc(self, inp):
-        self.adhoc_list.clear()
-        self._refresh_adhoc()
+        self.refresh_adhoc()
 
-    def _refresh_adhoc(self):
+    def refresh_adhoc(self):
+        self.adhoc_list.clear()
         result = self.client.collection("adhoc").get_full_list(200, {'sort': '-created'})
         for res in result:
             if res.__getattribute__('activated') == '':
@@ -46,9 +46,9 @@ class PocketbaseApi:
                                              res.__getattribute__('started'), res.__getattribute__('activated')))
 
     def _respond_config(self, inp):
-        self._refresh_config()
+        self.refresh_config()
 
-    def _refresh_config(self):
+    def refresh_config(self):
         result = self.client.collection("config").get_full_list(200)
         for res in result:
             self.config_list.update({res.__getattribute__('field'): res.__getattribute__('value')})
@@ -66,9 +66,9 @@ class PocketbaseApi:
         self.regular_list = []
         self.adhoc_list = []
         self.config_list = {}
-        self._refresh_adhoc()
-        self._refresh_regular()
-        self._refresh_config()
+        self.refresh_adhoc()
+        self.refresh_regular()
+        self.refresh_config()
 
         self.client.realtime.subscribe('regular', self._respond_reg)
         self.client.realtime.subscribe('adhoc', self._respond_adhoc)
