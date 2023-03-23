@@ -324,6 +324,11 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
             for user_id in user_chat_id_list:
                 await context.bot.send_message(chat_id=user_id, text="Hello, it's time to: " + adh.title)
 
+    while pbapi.confirmation_list:
+        for ct_id in ct_chat_id_list:
+            await context.bot.send_photo(ct_id, requests.get(pbapi.confirmation_list.pop(), stream=True).content,
+                                         caption='Here is a picture from the confirmation camera at home!')
+
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(BOT_TOKEN).build()

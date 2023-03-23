@@ -62,10 +62,28 @@ class PocketbaseApi:
             if res.__getattribute__('field') == 'toothbrushminutes':
                 self.client.collection("config").update(res.__getattribute__('id'), dat)
 
+    def _respond_confirmations(self, inp):
+        self.update_confirmations()
+
+    def update_confirmations(self):
+        result = self.client.collection("confirmations").get_full_list(200)
+
+        dat = {
+            'sent': True
+        }
+        for res in result:
+            if not res.__getattribute__('sent'):
+                self.confirmation_list.append(
+                    os.getenv("POCKETBASEIP") + 'api/files/confirmations/' + res.__getattribute__(
+                        'id') + "/" + res.__getattribute__('image'))
+            self.client.collection("confirmations").update(res.__getattribute__('id'), dat)
+
     def __init__(self):
         self.regular_list = []
         self.adhoc_list = []
         self.config_list = {}
+        self.confirmation_list = []
+
         self.refresh_adhoc()
         self.refresh_regular()
         self.refresh_config()
@@ -73,3 +91,5 @@ class PocketbaseApi:
         self.client.realtime.subscribe('regular', self._respond_reg)
         self.client.realtime.subscribe('adhoc', self._respond_adhoc)
         self.client.realtime.subscribe('config', self._respond_config)
+        self.client.realtime.subscribe('confirmations', self._respond_confirmations)
+
