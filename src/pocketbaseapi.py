@@ -29,7 +29,9 @@ class PocketbaseApi:
                         if res.__getattribute__('last_activated') != '' else None,
                         datetime.strptime(res.__getattribute__('last_started'),
                                           '%Y-%m-%d %H:%M:%S.%f')
-                        if res.__getattribute__('last_started') != '' else None))
+                        if res.__getattribute__('last_started') != '' else None,
+                        datetime.strptime(res.__getattribute__('last_finished'), '%Y-%m-%d %H:%M:%S.%f')
+                        if res.__getattribute__('last_finished') != '' else None))
 
     def _respond_adhoc(self, inp):
         self.refresh_adhoc()
@@ -43,7 +45,10 @@ class PocketbaseApi:
                                              datetime.strptime(res.__getattribute__('when'), '%Y-%m-%d %H:%M:%S.%f'),
                                              res.__getattribute__('picture'), res.__getattribute__('options'),
                                              res.__getattribute__('audio'), res.__getattribute__('device'),
-                                             res.__getattribute__('started'), res.__getattribute__('activated')))
+                                             res.__getattribute__('started'), res.__getattribute__('activated'),
+                                             datetime.strptime(res.__getattribute__('finished'),
+                                                               '%Y-%m-%d %H:%M:%S.%f')
+                                             if res.__getattribute__('finished') != '' else None))
 
     def _respond_config(self, inp):
         self.refresh_config()
