@@ -81,7 +81,7 @@ class PocketbaseApi:
                 self.confirmation_list.append(
                     os.getenv("POCKETBASEIP") + 'api/files/confirmations/' + res.__getattribute__(
                         'id') + "/" + res.__getattribute__('image'))
-            self.client.collection("confirmations").update(res.__getattribute__('id'), dat)
+                self.client.collection("confirmations").update(res.__getattribute__('id'), dat)
 
     def __init__(self):
         self.regular_list = []

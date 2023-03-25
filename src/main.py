@@ -314,8 +314,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
     pbapi.refresh_regular()
     pbapi.refresh_adhoc()
+    pbapi.update_confirmations()
 
-    print(pbapi.adhoc_list, pbapi.regular_list)
+    print(pbapi.adhoc_list, pbapi.regular_list, pbapi.confirmation_list)
 
     now = datetime.now()
     for reg in pbapi.regular_list:
